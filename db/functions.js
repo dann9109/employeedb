@@ -171,3 +171,12 @@ async function viewDepartmentBudget(connection) {
         connection.release();
     }
 }
+
+module.exports = {
+    updateEmployeeManager,
+    viewEmployeesByManager,
+    viewEmployeesByDepartment,
+    deleteDepartment,
+    viewDepartmentBudget,
+
+};

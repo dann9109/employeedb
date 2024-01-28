@@ -4,6 +4,9 @@ const mysql = require('mysql2/promise');
 const db = require('./db/connection');
 const express = require('express');
 const fs = require('fs');
+const { updateEmployeeManager } = require('./db/functions');
+
+
 
 const PORT = 3355; // Specify the port number you want to listen on
 
