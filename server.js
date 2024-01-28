@@ -1,6 +1,14 @@
 // Import required packages
 const inquirer = require('inquirer');
 const mysql = require('mysql2/promise');
+const db = require('./db/connection');
+const express = require('express');
+const fs = require('fs');
+
+const PORT = 3355; // Specify the port number you want to listen on
+
+// Create an instance of the Express application
+const app = express();
 
 // Function to start the application
 async function startApp() {
@@ -8,11 +16,12 @@ async function startApp() {
         // Create a connection pool to the MySQL database
         const pool = mysql.createPool({
             host: 'localhost',
-            port: 3306,
+            port: 3355,
             user: 'root',
             password: '',
             database: 'employee_db',
             connectionLimit: 10,
+            multipleStatements: true
         });
 
         // Get a connection from the pool
@@ -20,8 +29,12 @@ async function startApp() {
 
         console.log('Connected to the employee database.');
 
+        // Execute queries from db/query.sql
+        await executeQueriesFromFile(connection);
+
         // Prompt the user for the desired action
         const answer = await inquirer.prompt([
+            // ...
             {
                 name: 'action',
                 type: 'list',
@@ -34,38 +47,59 @@ async function startApp() {
                     'Add a role',
                     'Add an employee',
                     'Update an employee role',
+                    'Update an employee manager',         // Added option
+                    'View employees by manager',         // Added option
+                    'View employees by department',       // Added option
+                    'Delete a department',                // Added option
+                    'Delete a role',                      // Added option
+                    'Delete an employee',                 // Added option
+                    "View the total utilized budget of a department",  // Added option
                     'Exit',
                 ],
             },
         ]);
 
-        // Call the corresponding function based on the user's choice
         switch (answer.action) {
-            case 'View all departments':
-                await viewAllDepartments(connection);
+            // ...
+            case 'Update an employee manager':      // Added case
+                await updateEmployeeManager(connection);
                 break;
-            case 'View all roles':
-                await viewAllRoles(connection);
+            case 'View employees by manager':       // Added case
+                await viewEmployeesByManager(connection);
                 break;
-            case 'View all employees':
-                await viewAllEmployees(connection);
+            case 'View employees by department':    // Added case
+                await viewEmployeesByDepartment(connection);
                 break;
-            case 'Add a department':
-                await addDepartment(connection);
+            case 'Delete a department':             // Added case
+                await deleteDepartment(connection);
                 break;
-            case 'Add a role':
-                await addRole(connection);
+            case 'Delete a role':                   // Added case
+                await deleteRole(connection);
                 break;
-            case 'Add an employee':
-                await addEmployee(connection);
+            case 'Delete an employee':              // Added case
+                await deleteEmployee(connection);
                 break;
-            case 'Update an employee role':
-                await updateEmployeeRole(connection);
+            case 'View the total utilized budget of a department':  // Added case
+                await viewDepartmentBudget(connection);
                 break;
-            case 'Exit':
-                connection.release();
-                console.log('Disconnected from the employee database.');
-                break;
+            // ...
+        }
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+// Function to execute queries from db/query.sql
+async function executeQueriesFromFile(connection) {
+    try {
+        const queryFileContent = fs.readFileSync('./db/query.sql', 'utf8');
+        const queries = queryFileContent.split(';').map((query) => query.trim());
+
+        for (const query of queries) {
+            if (query) {
+                await connection.query(query);
+                console.log('Query executed successfully:', query);
+            }
         }
     } catch (error) {
         console.error('Error:', error.message);
@@ -80,59 +114,6 @@ async function viewAllDepartments(connection) {
 
         // Display the department names and IDs in a formatted table
         console.table(rows);
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        connection.release();
-    }
-}
-
-// Function to view all roles
-async function viewAllRoles(connection) {
-    try {
-        // Implement the database query to retrieve all roles
-        const [rows] = await connection.query('SELECT * FROM role');
-
-        // Display the job titles, role IDs, department names, and salaries in a formatted table
-        console.table(rows);
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        connection.release();
-    }
-}
-
-// Function to view all employees
-async function viewAllEmployees(connection) {
-    try {
-        // Implement the database query to retrieve all employees
-        const [rows] = await connection.query('SELECT * FROM employee');
-
-        // Display the employee data in a formatted table
-        console.table(rows);
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        connection.release();
-    }
-}
-
-// Function to add a department
-async function addDepartment(connection) {
-    try {
-        // Prompt the user to enter the name of the department
-        const answer = await inquirer.prompt([
-            {
-                name: 'name',
-                type: 'input',
-                message: 'Enter the name of the department:',
-            },
-        ]);
-
-        // Insert the department into the database
-        await connection.query('INSERT INTO department SET ?', answer);
-
-        console.log('Department added successfully.');
     } catch (error) {
         console.error('Error:', error.message);
     } finally {
@@ -167,6 +148,14 @@ async function addRole(connection) {
 
         console.log('Role added successfully.');
     } catch (error) {
-        console.error(err)
+        console.error('Error:', error.message);
+    } finally {
+        connection.release();
     }
 }
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+startApp();
