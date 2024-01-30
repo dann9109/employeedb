@@ -94,45 +94,59 @@ function startApp() {
 }
 
 // Add a function to update an employee's manager
-async function updateEmployeeManager() {
-    try {
-        // Prompt the user to select an employee to update
-        const employees = await connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee');
-        const employeeChoices = employees[0].map((employee) => ({
+function updateEmployeeManager() {
+    // Prompt the user to select an employee to update
+    connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', function (err, employees) {
+        if (err) {
+            console.error('Error:', err.message);
+            connection.release();
+            return;
+        }
+
+        const employeeChoices = employees.map((employee) => ({
             name: employee.name,
             value: employee.id,
         }));
 
-        const { employeeId } = await inquirer.prompt({
+        inquirer.prompt({
             name: 'employeeId',
             type: 'list',
             message: 'Select an employee to update their manager:',
             choices: employeeChoices,
+        }).then(function ({ employeeId }) {
+            // Prompt the user to select a manager for the employee
+            connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', function (err, managers) {
+                if (err) {
+                    console.error('Error:', err.message);
+                    connection.release();
+                    return;
+                }
+
+                const managerChoices = managers.map((manager) => ({
+                    name: manager.name,
+                    value: manager.id,
+                }));
+
+                inquirer.prompt({
+                    name: 'managerId',
+                    type: 'list',
+                    message: 'Select a new manager for the employee:',
+                    choices: managerChoices,
+                }).then(function ({ managerId }) {
+                    // Update the employee's manager in the database
+                    connection.query('UPDATE employee SET manager_id = ? WHERE id = ?', [managerId, employeeId], function (err) {
+                        if (err) {
+                            console.error('Error:', err.message);
+                        } else {
+                            console.log('Employee manager updated successfully.');
+                        }
+                        connection.release();
+                        startApp();
+                    });
+                });
+            });
         });
-
-        // Prompt the user to select a manager for the employee
-        const managers = await connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee');
-        const managerChoices = managers[0].map((manager) => ({
-            name: manager.name,
-            value: manager.id,
-        }));
-
-        const { managerId } = await inquirer.prompt({
-            name: 'managerId',
-            type: 'list',
-            message: 'Select a new manager for the employee:',
-            choices: managerChoices,
-        });
-
-        // Update the employee's manager in the database
-        await connection.query('UPDATE employee SET manager_id = ? WHERE id = ?', [managerId, employeeId]);
-
-        console.log('Employee manager updated successfully.');
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        connection.release();
-    }
+    });
 }
 
 // Add a function to view employees by manager
