@@ -1,32 +1,19 @@
+const mysql = require('mysql2');
 
-const mysql = require('mysql2/promise');
-const fs = require('fs');
-
-const sqlFile = fs.readFileSync('./db/schema.sql', 'utf8');
-const seedFile = fs.readFileSync('./db/seed.sql', 'utf8');
-const queryFile = fs.readFileSync('./db/query.sql', 'utf8');
-const sqlStatements = sqlFile.split(';').map((statement) => statement.trim());
-
-// Create a connection pool to the MySQL database
-const pool = mysql.createPool({
+const connection = mysql.createConnection({
     host: 'localhost',
+    port: 3306,
     user: 'root',
     password: '',
-    database: 'employee_db'
+    database: 'employee_db',
+    // connectionLimit: 10,
+    // multipleStatements: true
 });
 
-// Execute the SQL statements
-async function executeSQLStatements() {
-    try {
-        for (const statement of sqlStatements) {
-            await pool.query(statement);
-            console.log('SQL statement executed successfully');
-        }
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        pool.end();
-    }
-}
+connection.connect(function (err) {
+    if (err) throw err
+    console.log('Connected to the employee database.');
+});
 
-executeSQLStatements();
+
+module.exports = connection;
