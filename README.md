@@ -55,3 +55,11 @@ Deleting departments, roles, and employees.
 Viewing employees by manager or department.
 Calculating and displaying the total utilized budget of a department.
 
+
+## Contact
+
+For any questions or feedback about the application, please reachout:
+
+danielxstella@gmail.com
+
+
