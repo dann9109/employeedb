@@ -1,4 +1,5 @@
 // Import required packages
+const mysql = require('mysql2/promise');
 const inquirer = require('inquirer');
 const connection = require('./db/connection');
 
@@ -33,7 +34,7 @@ function startApp() {
             ],
         },
     ]).then(answer => {
-        console.log("helllloooooo", answer)
+
         switch (answer.action) {
             // ...
             case 'Update an employee manager':      // Added case
@@ -59,34 +60,35 @@ function startApp() {
                 break;
             case 'View all departments':
                 viewAllDepartments()
-                break
+                break;
             case 'View all roles':
                 viewAllRoles()
-                break
+                break;
             case 'View all employees':
                 viewAllEmployees()
-                break
+                break;
             case 'Add a role':
                 addRole()
-                break
+                break;
             case 'Add a department':
                 addDepartment()
-                break
+                break;
             case 'Add an employee':
                 addEmployee()
-                break
+                break;
             case 'Select an employee':
                 selectEmployee()
-                break
+                break;
             case 'Remove employee':
                 removeEmployee()
-                break
+                break;
             case 'Remove department':
                 removeDepartment()
-                break
+                break;
             case 'Remove role':
                 removeRole()
-                break
+                break;
+
             // ...
         }
     });
@@ -99,7 +101,6 @@ function updateEmployeeManager() {
     connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', function (err, employees) {
         if (err) {
             console.error('Error:', err.message);
-            connection.release();
             return;
         }
 
@@ -118,7 +119,6 @@ function updateEmployeeManager() {
             connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', function (err, managers) {
                 if (err) {
                     console.error('Error:', err.message);
-                    connection.release();
                     return;
                 }
 
@@ -140,7 +140,7 @@ function updateEmployeeManager() {
                         } else {
                             console.log('Employee manager updated successfully.');
                         }
-                        connection.release();
+
                         startApp();
                     });
                 });
@@ -181,7 +181,7 @@ async function viewEmployeesByManager() {
     } catch (error) {
         console.error('Error:', error.message);
     } finally {
-        connection.release();
+        startApp();
     }
 }
 
@@ -217,7 +217,7 @@ async function viewEmployeesByDepartment() {
     } catch (error) {
         console.error('Error:', error.message);
     } finally {
-        connection.release();
+        connection.end();
     }
 }
 
@@ -245,7 +245,7 @@ async function deleteDepartment() {
     } catch (error) {
         console.error('Error:', error.message);
     } finally {
-        connection.release();
+
     }
 }
 
@@ -276,8 +276,9 @@ async function viewDepartmentBudget() {
         console.log(`Total utilized budget for the department: $${total_budget}`);
     } catch (error) {
         console.error('Error:', error.message);
+        startApp();
     } finally {
-        connection.release();
+
     }
 }
 //called in addContent function if selected dept
